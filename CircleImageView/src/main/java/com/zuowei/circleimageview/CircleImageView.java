@@ -2,16 +2,21 @@ package com.zuowei.circleimageview;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Region;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+
+import static android.R.attr.radius;
+import static android.R.attr.width;
 
 /**
  * 项目名称：CircleImageView
@@ -26,9 +31,9 @@ public class CircleImageView extends ImageView {
     Path circlePath = new Path();
     Paint paint = new Paint();
     Paint layerPaint = new Paint();
-    RectF rectF = new RectF();
     RectF layerRect;
     PorterDuffXfermode porterDuffXfermode;
+    float radius;
     public CircleImageView(Context context) {
         super(context);
         init();
@@ -49,8 +54,6 @@ public class CircleImageView extends ImageView {
         init();
     }
 
-    int radius;
-
     private void init() {
         addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @Override
@@ -58,12 +61,10 @@ public class CircleImageView extends ImageView {
                 removeOnLayoutChangeListener(this);
                 layerRect.set(0,0,getWidth(),getHeight());
                 radius = Math.min(getWidth()/2,getHeight()/2);
-
+                Rect bounds = getDrawable().getBounds();
+                setImageMatrix(getNewMatrix(bounds.left,bounds.top,bounds.right,bounds.bottom));//support matrix
             }
         });
-
-        rectF.set(getWidth() / 2 - radius,getHeight() / 2 - radius ,
-                getWidth() / 2 + radius,getHeight() / 2 + radius);
 
         layerRect = new RectF();
 
@@ -91,5 +92,29 @@ public class CircleImageView extends ImageView {
                     canvas.drawPath(circlePath,paint);
                 canvas.restore();
         canvas.restore();
+    }
+
+    private Matrix getNewMatrix(int left,int top,int right,int bottom) {
+        float scale;
+        float dx = 0;
+        float dy = 0;
+        int width = right - left;
+        int height = bottom - top;
+
+        Matrix matrix = new Matrix();
+        matrix.set(null);
+
+        if (width * getHeight() > getWidth() * height) {
+            scale = getHeight() / (float) height;
+            dx = (getWidth() - width * scale) * 0.5f;
+        } else {
+            scale = getWidth() / (float) height;
+            dy = (getHeight() - height * scale) * 0.5f;
+        }
+
+        matrix.setScale(scale, scale);
+        matrix.postTranslate((int) (dx + 0.5f) + left, (int) (dy + 0.5f) + top);
+
+        return matrix;
     }
 }

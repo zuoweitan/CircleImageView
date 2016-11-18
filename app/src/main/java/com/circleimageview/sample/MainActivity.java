@@ -1,4 +1,4 @@
-package com.zuowei.circleimageview;
+package com.circleimageview.sample;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
