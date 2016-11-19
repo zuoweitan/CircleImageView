@@ -15,6 +15,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.util.Arrays;
+
 import static android.R.attr.radius;
 import static android.R.attr.width;
 
@@ -59,10 +61,15 @@ public class CircleImageView extends ImageView {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 removeOnLayoutChangeListener(this);
-                layerRect.set(0,0,getWidth(),getHeight());
-                radius = Math.min(getWidth()/2,getHeight()/2);
+                layerRect.set(getPaddingLeft(),getPaddingTop(),getWidth() - getPaddingRight(),getHeight() - getPaddingBottom());
                 Rect bounds = getDrawable().getBounds();
-                setImageMatrix(getNewMatrix(bounds.left,bounds.top,bounds.right,bounds.bottom));//support matrix
+                int vwidth = getWidth() - getPaddingLeft() - getPaddingRight();
+                int vheight = getHeight() - getPaddingTop() - getPaddingBottom();
+                float[] scaleParams = getScaleParams();
+                radius = min(vwidth / 2f,vheight / 2f,bounds.centerX() * scaleParams[0],bounds.centerY() * scaleParams[1]);
+                if (getScaleType() == ScaleType.MATRIX) {
+                    setImageMatrix(getNewMatrix(bounds.left, bounds.top, bounds.right, bounds.bottom));//support matrix
+                }
             }
         });
 
@@ -71,6 +78,13 @@ public class CircleImageView extends ImageView {
         layerPaint.setXfermode(null);
 
         porterDuffXfermode = new PorterDuffXfermode(PorterDuff.Mode.DST_IN);
+    }
+
+    private float[] getScaleParams() {
+        Matrix imageMatrix = getImageMatrix();
+        float[] martixValues = new float[9];
+        imageMatrix.getValues(martixValues);
+        return new float[]{martixValues[0],martixValues[4]};
     }
 
     @Override
@@ -84,7 +98,7 @@ public class CircleImageView extends ImageView {
             circlePath.addCircle(layerRect.centerX(),layerRect.centerY(),radius, Path.Direction.CCW);
             canvas.clipPath(circlePath);
             circlePath.reset();
-            circlePath.addCircle(layerRect.centerX(),layerRect.centerY(),radius-1, Path.Direction.CCW);//Antialiasing
+            circlePath.addCircle(layerRect.centerX(),layerRect.centerY(),radius-1f, Path.Direction.CCW);//Antialiasing
                 canvas.save(Canvas.ALL_SAVE_FLAG);
                     paint.setXfermode(porterDuffXfermode);
                     paint.setAntiAlias(true);
@@ -98,23 +112,47 @@ public class CircleImageView extends ImageView {
         float scale;
         float dx = 0;
         float dy = 0;
+        int vwidth = getWidth() - getPaddingLeft() - getPaddingRight();
+        int vheight = getHeight() - getPaddingTop() - getPaddingBottom();
         int width = right - left;
         int height = bottom - top;
 
         Matrix matrix = new Matrix();
         matrix.set(null);
 
-        if (width * getHeight() > getWidth() * height) {
-            scale = getHeight() / (float) height;
-            dx = (getWidth() - width * scale) * 0.5f;
+        if (width * vheight > vwidth * height) {
+            scale = vheight / (float) height;
+            dx = (vwidth - width * scale) * 0.5f;
         } else {
-            scale = getWidth() / (float) height;
-            dy = (getHeight() - height * scale) * 0.5f;
+            scale = vwidth / (float) height;
+            dy = (vheight - height * scale) * 0.5f;
         }
 
         matrix.setScale(scale, scale);
         matrix.postTranslate((int) (dx + 0.5f) + left, (int) (dy + 0.5f) + top);
 
         return matrix;
+    }
+
+    private float min_r(float... values){
+        if (values.length == 1){
+            return values[0];
+        }
+        float [] newValues = Arrays.copyOf(values,values.length - 1);
+        newValues[newValues.length - 1] = Math.min(values[values.length - 1],values[values.length - 2]);
+        return min_r(newValues);
+    }
+
+    private float min(float... values){
+        if (values.length <= 0){
+            throw new IndexOutOfBoundsException("values is empty");
+        }
+
+        float min = values[0];
+        for (float value : values){
+            min = Math.min(value,min);
+        }
+
+        return min;
     }
 }

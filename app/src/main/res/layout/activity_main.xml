@@ -19,17 +19,6 @@
 
         <LinearLayout style="@style/circle_layout_style">
 
-            <ImageView
-                android:src="@mipmap/lufei"
-                style="@style/circle_style" />
-
-            <TextView style="@style/cricle_text_style"
-                android:text="ImageView"/>
-
-        </LinearLayout>
-
-        <LinearLayout style="@style/circle_layout_style">
-
             <com.zuowei.circleimageview.CircleImageView
                 android:src="@mipmap/lufei"
                 android:scaleType="fitXY"

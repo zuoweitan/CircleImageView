@@ -47,11 +47,11 @@
     <states>
       <state key="ProjectJDKs.UI">
         <settings>
-          <last-edited>1.8</last-edited>
+          <last-edited>Android API 22 Platform</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
-                <option value="0.43333334" />
+                <option value="0.2" />
               </list>
             </option>
           </splitter-proportions>
