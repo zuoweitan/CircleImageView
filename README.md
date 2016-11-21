@@ -10,6 +10,15 @@ it's easy to use just like ImageView,and you never need to **do this**:
 
 you can simply use the library like Picasso or Glide with this view.
 
+Gradle
+------
+```
+dependencies {
+    ...
+    compile 'com.vivifarm.view:circleimageview:0.1.0'
+}
+```
+
 Usage
 -----
 ```xml

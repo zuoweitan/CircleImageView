@@ -26,6 +26,20 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:23.4.0'
     testCompile 'junit:junit:4.12'
 }
+
+
+ext {
+    name = 'CircleImageView'
+    desc = 'A circular ImageView simply used as normal ImageView.'
+
+    groupId = 'com.vivifarm.view'
+    versionName = '0.1.0'
+
+    websiteUrl = 'https://github.com/zuoweitan/CircleImageView'
+    issueTrackerUrl = 'https://github.com/zuoweitan/CircleImageView/issues'
+    vcsUrl = 'https://github.com/zuoweitan/CircleImageView.git'
+}
+
+apply from: 'https://raw.githubusercontent.com/zuoweitan/release-android-lib-to-jcenter/master/bintray.gradle'
