@@ -9,16 +9,14 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Region;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
 import java.util.Arrays;
-
-import static android.R.attr.radius;
-import static android.R.attr.width;
 
 /**
  * 项目名称：CircleImageView
@@ -30,54 +28,80 @@ import static android.R.attr.width;
  * 修改备注：
  */
 public class CircleImageView extends ImageView {
-    Path circlePath = new Path();
+    float radius;
+    Path  circlePath = new Path();
     Paint paint = new Paint();
     Paint layerPaint = new Paint();
-    RectF layerRect;
+    RectF layerRect = new RectF();
     PorterDuffXfermode porterDuffXfermode;
-    float radius;
+    boolean drawableSettled;
+    volatile boolean initDone;
+
+
     public CircleImageView(Context context) {
         super(context);
-        init();
     }
 
     public CircleImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
     }
 
     public CircleImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
     }
 
     public CircleImageView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+    }
+
+    {
         init();
     }
 
     private void init() {
+        circlePath = new Path();
+        paint = new Paint();
+        layerPaint = new Paint();
+        layerRect = new RectF();
+        porterDuffXfermode = new PorterDuffXfermode(PorterDuff.Mode.DST_IN);
         addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 removeOnLayoutChangeListener(this);
-                layerRect.set(getPaddingLeft(),getPaddingTop(),getWidth() - getPaddingRight(),getHeight() - getPaddingBottom());
-                Rect bounds = getDrawable().getBounds();
-                int vwidth = getWidth() - getPaddingLeft() - getPaddingRight();
-                int vheight = getHeight() - getPaddingTop() - getPaddingBottom();
-                float[] scaleParams = getScaleParams();
-                radius = min(vwidth / 2f,vheight / 2f,bounds.centerX() * scaleParams[0],bounds.centerY() * scaleParams[1]);
-                if (getScaleType() == ScaleType.MATRIX) {
-                    setImageMatrix(getNewMatrix(bounds.left, bounds.top, bounds.right, bounds.bottom));//support matrix
-                }
+                drawableSettled = syncDrawable();
+                initDone = true;
             }
         });
+    }
 
-        layerRect = new RectF();
+    private boolean syncDrawable() {
 
-        layerPaint.setXfermode(null);
+        Drawable drawable = getDrawable();
+        if (drawable != null) {
+            layerRect.set(getPaddingLeft(), getPaddingTop(), getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());
+            Rect bounds = drawable.getBounds();
+            int vwidth = getWidth() - getPaddingLeft() - getPaddingRight();
+            int vheight = getHeight() - getPaddingTop() - getPaddingBottom();
+            float[] scaleParams = getScaleParams();
+            radius = min(vwidth / 2f, vheight / 2f, bounds.centerX() * scaleParams[0], bounds.centerY() * scaleParams[1]);
+            if (getScaleType() == ScaleType.MATRIX) {
+                setImageMatrix(getNewMatrix(bounds.left, bounds.top, bounds.right, bounds.bottom));//support matrix
+            }
+            return true;
+        }
+        return false;
+    }
 
-        porterDuffXfermode = new PorterDuffXfermode(PorterDuff.Mode.DST_IN);
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        drawableSettled = syncDrawable();
+    }
+
+    private void syncDrawableIf(Drawable drawable) {
+        if (initDone || !verifyDrawable(drawable)) {
+            drawableSettled = syncDrawable();
+        }
     }
 
     private float[] getScaleParams() {
@@ -88,24 +112,59 @@ public class CircleImageView extends ImageView {
     }
 
     @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
+    public void setBackground(Drawable background) {
+        setImageDrawable(background);
+    }
+
+    @Override
+    public void setBackgroundColor(int color) {
+        setBackground(new ColorDrawable(color));
+    }
+
+    @Override
+    public void setBackgroundDrawable(Drawable background) {
+        setBackground(background);
+    }
+
+
+    @Override
+    public void setImageDrawable(Drawable drawable) {
+        super.setImageDrawable(drawable);
+        if (!isLayoutRequested()) {
+            syncDrawableIf(drawable);
+        }
+    }
+
+    @Override
+    public void setImageResource(int resId) {
+        super.setImageResource(resId);
+        syncDrawableIf(null);
+    }
+
+    @Override
+    public void setImageURI(Uri uri) {
+        super.setImageURI(uri);
+        syncDrawableIf(null);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.saveLayer(layerRect, layerPaint,Canvas.CLIP_SAVE_FLAG);//clear background
-            circlePath.addCircle(layerRect.centerX(),layerRect.centerY(),radius, Path.Direction.CCW);
-            canvas.clipPath(circlePath);
-            circlePath.reset();
-            circlePath.addCircle(layerRect.centerX(),layerRect.centerY(),radius-1f, Path.Direction.CCW);//Antialiasing
+        if (drawableSettled) {
+            canvas.saveLayer(layerRect, layerPaint, Canvas.CLIP_SAVE_FLAG);//clear background
+                circlePath.addCircle(layerRect.centerX(), layerRect.centerY(), radius, Path.Direction.CCW);
+                canvas.clipPath(circlePath);
+                circlePath.reset();
+                circlePath.addCircle(layerRect.centerX(), layerRect.centerY(), radius - 1f, Path.Direction.CCW);//Antialiasing
                 canvas.save(Canvas.ALL_SAVE_FLAG);
                     paint.setXfermode(porterDuffXfermode);
                     paint.setAntiAlias(true);
                     super.onDraw(canvas);
-                    canvas.drawPath(circlePath,paint);
+                    canvas.drawPath(circlePath, paint);
                 canvas.restore();
-        canvas.restore();
+            canvas.restore();
+        }else {
+            super.onDraw(canvas);
+        }
     }
 
     private Matrix getNewMatrix(int left,int top,int right,int bottom) {
