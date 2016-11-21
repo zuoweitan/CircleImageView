@@ -29,10 +29,10 @@ import java.util.Arrays;
  */
 public class CircleImageView extends ImageView {
     float radius;
-    Path  circlePath = new Path();
-    Paint paint = new Paint();
-    Paint layerPaint = new Paint();
-    RectF layerRect = new RectF();
+    Path  circlePath;
+    Paint paint;
+    Paint layerPaint;
+    RectF layerRect;
     PorterDuffXfermode porterDuffXfermode;
     boolean drawableSettled;
     volatile boolean initDone;
