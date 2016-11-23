@@ -15,7 +15,7 @@ Gradle
 ```
 dependencies {
     ...
-    compile 'com.vivifarm.view:circleimageview:1.0.0'
+    compile 'com.vivifarm.view:circleimageview:1.1.0'
 }
 ```
 
