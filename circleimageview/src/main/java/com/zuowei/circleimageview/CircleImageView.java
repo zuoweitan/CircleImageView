@@ -27,12 +27,12 @@ import java.util.Arrays;
  * 修改备注：
  */
 public class CircleImageView extends ImageView {
+
     float radius;
     Path  circlePath;
     Paint paint;
     Paint layerPaint;
     RectF layerRect;
-    PorterDuffXfermode porterDuffXfermode;
     boolean drawableSettled;
     volatile boolean isDirty;
 
@@ -57,14 +57,18 @@ public class CircleImageView extends ImageView {
     }
 
     private void init() {
+
         circlePath = new Path();
-        paint = new Paint();
+
         layerPaint = new Paint();
         layerPaint.setXfermode(null);
+
         layerRect = new RectF();
-        porterDuffXfermode = new PorterDuffXfermode(PorterDuff.Mode.DST_IN);
+
+        paint = new Paint();
         paint.setAntiAlias(true);
-        paint.setXfermode(porterDuffXfermode);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+
         addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
@@ -123,11 +127,6 @@ public class CircleImageView extends ImageView {
     @Override
     public void setBackgroundDrawable(Drawable background) {
         setBackground(background);
-    }
-
-    @Override
-    public void setScaleType(ScaleType scaleType) {
-        super.setScaleType(scaleType);
     }
 
     @Override
