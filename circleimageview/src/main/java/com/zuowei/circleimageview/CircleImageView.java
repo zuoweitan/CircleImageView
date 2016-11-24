@@ -126,17 +126,25 @@ public class CircleImageView extends ImageView {
     }
 
     @Override
+    public void setScaleType(ScaleType scaleType) {
+        super.setScaleType(scaleType);
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         syncDrawableIf();
         if (drawableSettled) {
-            canvas.saveLayer(layerRect, layerPaint, Canvas.CLIP_SAVE_FLAG);//clear background
+            int layerID = canvas.saveLayer(layerRect, layerPaint, Canvas.CLIP_SAVE_FLAG);//clear background
+                circlePath.reset();
                 circlePath.addCircle(layerRect.centerX(), layerRect.centerY(), radius, Path.Direction.CCW);
                 canvas.clipPath(circlePath);
+
+                super.onDraw(canvas);//draw drawable
+
                 circlePath.reset();
                 circlePath.addCircle(layerRect.centerX(), layerRect.centerY(), radius - 1f, Path.Direction.CCW);//Antialiasing
-                super.onDraw(canvas);
                 canvas.drawPath(circlePath, paint);
-            canvas.restore();
+            canvas.restoreToCount(layerID);
         }else {
             super.onDraw(canvas);
         }
